@@ -1,0 +1,14 @@
+# Build outputs
+dist/
+build/
+out/
+tmp/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Node / Python (if you later add)
+node_modules/
+__pycache__/

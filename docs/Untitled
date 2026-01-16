@@ -1,0 +1,12 @@
+# Verifying downloads
+
+## 1) Download a release artifact
+Go to this repo’s GitHub Releases page and download:
+- the `*.tar.gz`
+- `SHA256SUMS`
+
+## 2) Verify checksum (macOS)
+In the folder containing your downloaded files:
+
+```bash
+shasum -a 256 -c SHA256SUMS
