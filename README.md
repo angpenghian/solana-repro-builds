@@ -28,7 +28,7 @@ supply-chain-friendly build pipeline that anyone can verify.
 Upstream tags/releases
         |
         v
-Scheduled tag check (CI cron)
+Scheduled tag check (CI cron, every 6 hours)
         |
         v
 Build in containerized environment
