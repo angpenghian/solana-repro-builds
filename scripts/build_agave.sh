@@ -18,7 +18,7 @@ echo "[+] Building Agave ${TAG} into ${OUT_DIR}"
 
 docker build -t solana-repro-builds-agave -f "${ROOT_DIR}/builders/agave/Dockerfile" "${ROOT_DIR}/builders/agave"
 
-docker run --rm -t \
+docker run --rm \
   -v "${ROOT_DIR}:/repo" \
   -w /repo \
   solana-repro-builds-agave bash -lc "

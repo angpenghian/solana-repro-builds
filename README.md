@@ -11,11 +11,17 @@ This project monitors upstream tags/releases and publishes build outputs as GitH
 Solana validator clients stopped shipping binaries. This repo exists to provide a clean, repeatable,
 supply-chain-friendly build pipeline that anyone can verify.
 
+## Why this is trustworthy
+- The checksum (hash) proves the file you downloaded is exactly what was published.
+- Reproducible builds mean anyone can rebuild and get the same checksum.
+- CI logs and build metadata make the process auditable.
+
 ## Current status
 - Agave `v3.0.0` build works.
 - SHA256 checksum verified.
 - Linux smoke test verified.
 - Reproducibility is **not** achieved yet (two rebuilds produced different binary hashes).
+- GitHub Actions workflow exists to auto-build on a schedule.
 
 ## How it works (flowchart)
 ```
@@ -25,7 +31,7 @@ Upstream tags/releases
 Scheduled tag check (CI cron)
         |
         v
-Build in pinned container
+Build in containerized environment
         |
         v
 Package binaries (tar.gz)
@@ -40,6 +46,8 @@ Publish GitHub Release assets
 ## File structure
 ```
 .
+├─ .github/workflows/
+│  └─ agave-auto-build.yml
 ├─ builders/
 │  └─ agave/
 │     └─ Dockerfile
@@ -53,6 +61,9 @@ Publish GitHub Release assets
 │        └─ bin/
 └─ README.md
 ```
+
+## Prerequisites
+- Docker
 
 ## Build locally (Agave)
 ```bash
@@ -87,6 +98,12 @@ shasum -a 256 dist/agave/_repro/v3.0.0/run1/agave-v3.0.0-linux-x86_64.tar.gz \
 diff -u dist/agave/_repro/v3.0.0/run1-files.sha256 \
   dist/agave/_repro/v3.0.0/run2-files.sha256
 ```
+
+## Automation (GitHub Actions)
+Workflow: `.github/workflows/agave-auto-build.yml`
+- Scheduled checks (cron) look for the latest upstream release tag.
+- If this repo does not already have a release for that tag, it builds and uploads assets.
+- You can trigger manually in GitHub → Actions → `agave-auto-build` → Run workflow.
 
 ## Roadmap
 - Pin toolchains and normalize build environment for determinism.
