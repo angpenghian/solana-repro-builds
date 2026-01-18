@@ -15,17 +15,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Determine latest upstream tag
+      - name: Determine latest upstream stable tag
         id: tag
         run: |
           python - <<'PY'
           import json
           import os
           import urllib.request
-          url = "https://api.github.com/repos/anza-xyz/agave/releases/latest"
+          url = "https://api.github.com/repos/anza-xyz/agave/releases?per_page=50"
           with urllib.request.urlopen(url) as r:
-            data = json.load(r)
-          tag = data["tag_name"]
+            releases = json.load(r)
+          tag = None
+          for rel in releases:
+            body = (rel.get("body") or "").lower()
+            name = (rel.get("name") or "").lower()
+            if "stable" in body or "stable" in name:
+              tag = rel.get("tag_name")
+              break
+          if not tag:
+            raise SystemExit("No stable release found in upstream releases list")
           print(f"tag={tag}")
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
             f.write(f"tag={tag}\n")
