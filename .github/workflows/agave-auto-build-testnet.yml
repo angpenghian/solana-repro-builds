@@ -1,0 +1,77 @@
+name: agave-auto-build-testnet
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-agave-testnet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine latest upstream testnet tag
+        id: tag
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+          url = "https://api.github.com/repos/anza-xyz/agave/releases?per_page=50"
+          with urllib.request.urlopen(url) as r:
+            releases = json.load(r)
+          upstream_tag = None
+          for rel in releases:
+            body = (rel.get("body") or "").lower()
+            name = (rel.get("name") or "").lower()
+            if "testnet" in body or "testnet" in name:
+              upstream_tag = rel.get("tag_name")
+              break
+          if not upstream_tag:
+            raise SystemExit("No testnet release found in upstream releases list")
+          release_tag = f"{upstream_tag}-testnet"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"upstream_tag={upstream_tag}\n")
+            f.write(f"release_tag={release_tag}\n")
+          PY
+
+      - name: Check if release already exists
+        id: release_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.tag.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          api="https://api.github.com/repos/${{ github.repository }}/releases/tags/${RELEASE_TAG}"
+          status="$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "$api")"
+          if [ "$status" = "200" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Agave (testnet)
+        if: steps.release_check.outputs.exists == 'false'
+        run: |
+          ./scripts/build_agave.sh "${{ steps.tag.outputs.upstream_tag }}"
+
+      - name: Publish testnet release
+        if: steps.release_check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          name: Agave ${{ steps.tag.outputs.upstream_tag }} (testnet)
+          body: |
+            Automated testnet build from upstream tag `${{ steps.tag.outputs.upstream_tag }}`.
+            See README for verification instructions.
+          files: |
+            dist/agave/${{ steps.tag.outputs.upstream_tag }}/agave-${{ steps.tag.outputs.upstream_tag }}-linux-x86_64.tar.gz
+            dist/agave/${{ steps.tag.outputs.upstream_tag }}/SHA256SUMS

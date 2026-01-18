@@ -105,6 +105,10 @@ Workflow: `.github/workflows/agave-auto-build.yml`
 - If this repo does not already have a release for that tag, it builds and uploads assets.
 - You can trigger manually in GitHub → Actions → `agave-auto-build` → Run workflow.
 
+Testnet workflow: `.github/workflows/agave-auto-build-testnet.yml`
+- Builds the latest upstream release marked “testnet”.
+- Publishes with a `-testnet` suffix to avoid clashing with mainnet releases.
+
 ## Roadmap
 - Pin toolchains and normalize build environment for determinism.
 - Deterministic packaging (stable ordering, fixed timestamps).
