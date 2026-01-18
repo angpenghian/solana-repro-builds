@@ -1,0 +1,75 @@
+name: frankendancer-auto-build
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-frankendancer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine latest upstream mainnet tag
+        id: tag
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+          url = "https://api.github.com/repos/firedancer-io/firedancer/releases?per_page=50"
+          with urllib.request.urlopen(url) as r:
+            releases = json.load(r)
+          tag = None
+          for rel in releases:
+            body = (rel.get("body") or "").lower()
+            name = (rel.get("name") or "").lower()
+            if "mainnet" in body or "mainnet" in name:
+              tag = rel.get("tag_name")
+              break
+          if not tag:
+            raise SystemExit("No mainnet release found in upstream releases list")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"tag={tag}\n")
+          PY
+
+      - name: Check if release already exists
+        id: release_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          api="https://api.github.com/repos/${{ github.repository }}/releases/tags/${TAG}"
+          status="$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "$api")"
+          if [ "$status" = "200" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Frankendancer
+        if: steps.release_check.outputs.exists == 'false'
+        run: |
+          JOBS=1 ./scripts/build_frankendancer.sh "${{ steps.tag.outputs.tag }}"
+
+      - name: Publish release
+        if: steps.release_check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Frankendancer ${{ steps.tag.outputs.tag }}
+          body: |
+            Automated build from upstream tag `${{ steps.tag.outputs.tag }}`.
+            See README for verification instructions.
+          files: |
+            dist/frankendancer/${{ steps.tag.outputs.tag }}/frankendancer-${{ steps.tag.outputs.tag }}-linux-x86_64.tar.gz
+            dist/frankendancer/${{ steps.tag.outputs.tag }}/SHA256SUMS
