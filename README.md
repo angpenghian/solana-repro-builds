@@ -53,9 +53,14 @@ Publish GitHub Release assets
 │  ├─ build_agave.sh
 │  └─ build_frankendancer.sh
 ├─ dist/
-│  └─ agave/
+│  ├─ agave/
+│  │  └─ <tag>/
+│  │     ├─ agave-<tag>-linux-x86_64.tar.gz
+│  │     ├─ SHA256SUMS
+│  │     └─ bin/
+│  └─ frankendancer/
 │     └─ <tag>/
-│        ├─ agave-<tag>-linux-x86_64.tar.gz
+│        ├─ frankendancer-<tag>-linux-x86_64.tar.gz
 │        ├─ SHA256SUMS
 │        └─ bin/
 └─ README.md
