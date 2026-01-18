@@ -2,6 +2,7 @@
 
 Automated, reproducible builds and verifiable release artifacts for Solana validator clients:
 - **Agave** (anza-xyz/agave)
+- **Agave Jito** (jito-foundation/jito-solana)
 - **Firedancer / Frankendancer** (firedancer-io/firedancer)
 
 This project monitors upstream tags/releases and publishes build outputs as GitHub Release assets
@@ -42,20 +43,30 @@ Publish GitHub Release assets
 ├─ .github/workflows/
 │  ├─ agave-auto-build.yml
 │  ├─ agave-auto-build-testnet.yml
+│  ├─ jito-auto-build.yml
+│  ├─ jito-auto-build-testnet.yml
 │  ├─ frankendancer-auto-build.yml
 │  └─ frankendancer-auto-build-testnet.yml
 ├─ builders/
 │  ├─ agave/
 │  │  └─ Dockerfile
+│  ├─ jito/
+│  │  └─ Dockerfile
 │  └─ frankendancer/
 │     └─ Dockerfile
 ├─ scripts/
 │  ├─ build_agave.sh
+│  ├─ build_jito.sh
 │  └─ build_frankendancer.sh
 ├─ dist/
 │  ├─ agave/
 │  │  └─ <tag>/
 │  │     ├─ agave-<tag>-linux-x86_64.tar.gz
+│  │     ├─ SHA256SUMS
+│  │     └─ bin/
+│  ├─ jito/
+│  │  └─ <tag>/
+│  │     ├─ jito-<tag>-linux-x86_64.tar.gz
 │  │     ├─ SHA256SUMS
 │  │     └─ bin/
 │  └─ frankendancer/
@@ -77,6 +88,12 @@ These steps are in order. The `dist/` folder exists after cloning, but it’s em
 # example: ./scripts/build_agave.sh v3.0.0
 ```
 
+### Build locally (Agave Jito)
+```bash
+./scripts/build_jito.sh <jito_tag>
+# example: ./scripts/build_jito.sh v1.18.22-jito
+```
+
 ### Verify artifacts (macOS)
 ```bash
 cd dist/agave/<agave_tag>
@@ -95,6 +112,23 @@ docker run --rm -v "$PWD/dist/agave/<agave_tag>:/out" ubuntu:24.04 bash -lc '
   tar -xzf /out/agave-<agave_tag>-linux-x86_64.tar.gz -C /tmp/agave-test
   /tmp/agave-test/bin/solana --version
   /tmp/agave-test/bin/agave-validator --version
+'
+```
+
+### Verify artifacts (Agave Jito)
+```bash
+cd dist/jito/<jito_tag>
+shasum -a 256 -c SHA256SUMS
+```
+
+### Smoke test in Linux container (Agave Jito)
+```bash
+docker run --platform=linux/amd64 --rm -v "$PWD/dist/jito/<jito_tag>:/out" ubuntu:24.04 bash -lc '
+  apt-get update >/dev/null && apt-get install -y ca-certificates >/dev/null
+  mkdir -p /tmp/jito-test
+  tar -xzf /out/jito-<jito_tag>-linux-x86_64.tar.gz -C /tmp/jito-test
+  /tmp/jito-test/bin/solana --version
+  /tmp/jito-test/bin/agave-validator --version
 '
 ```
 
@@ -148,6 +182,14 @@ Testnet workflow: `.github/workflows/agave-auto-build-testnet.yml`
 - Builds the latest upstream release marked “testnet”.
 - Publishes with a `-testnet` suffix to avoid clashing with mainnet releases.
 
+Workflow: `.github/workflows/jito-auto-build.yml`
+- Scheduled checks (cron) look for the latest upstream **mainnet** release.
+- Builds and publishes Jito tarball + SHA256SUMS.
+
+Testnet workflow: `.github/workflows/jito-auto-build-testnet.yml`
+- Builds the latest upstream **testnet** release.
+- Publishes with a `-testnet` suffix to avoid clashing with mainnet releases.
+
 Workflow: `.github/workflows/frankendancer-auto-build.yml`
 - Scheduled checks (cron) look for the latest upstream **mainnet** release.
 - Builds and publishes Frankendancer tarball + SHA256SUMS.
@@ -162,6 +204,7 @@ Testnet workflow: `.github/workflows/frankendancer-auto-build-testnet.yml`
 - CI schedule to detect new upstream tags and auto-build.
 - SBOM generation, provenance/attestations, and artifact signing.
 - Expand Frankendancer reproducibility checks.
+- Add Agave Jito CI builds.
 
 ## Trust model / disclaimer
 This repo provides automated build artifacts for convenience. Always verify checksums and provenance.
