@@ -16,13 +16,6 @@ supply-chain-friendly build pipeline that anyone can verify.
 - Reproducible builds mean anyone can rebuild and get the same checksum.
 - CI logs and build metadata make the process auditable.
 
-## Current status
-- Agave `v3.0.0` build works.
-- SHA256 checksum verified.
-- Linux smoke test verified.
-- Reproducibility is **not** achieved yet (two rebuilds produced different binary hashes).
-- GitHub Actions workflow exists to auto-build on a schedule.
-
 ## How it works (flowchart)
 ```
 Upstream tags/releases
@@ -47,7 +40,8 @@ Publish GitHub Release assets
 ```
 .
 ├─ .github/workflows/
-│  └─ agave-auto-build.yml
+│  ├─ agave-auto-build.yml
+│  └─ agave-auto-build-testnet.yml
 ├─ builders/
 │  └─ agave/
 │     └─ Dockerfile
@@ -61,42 +55,51 @@ Publish GitHub Release assets
 │        └─ bin/
 └─ README.md
 ```
+## Local testing (build → verify → smoke test)
+These steps are in order. The `dist/` folder exists after cloning, but it’s empty until you build.
 
 ## Prerequisites
 - Docker
 
-## Build locally (Agave)
+### Build locally (Agave)
 ```bash
-./scripts/build_agave.sh v3.0.0
+./scripts/build_agave.sh <agave_tag>
+# example: ./scripts/build_agave.sh v3.0.0
 ```
 
-## Verify artifacts (macOS)
+### Verify artifacts (macOS)
 ```bash
-cd dist/agave/v3.0.0
+cd dist/agave/<agave_tag>
 shasum -a 256 -c SHA256SUMS
 ```
 
-## Smoke test in Linux container
+### Smoke test in Linux container
+This runs the Linux binaries inside a temporary Ubuntu container (macOS can’t run them directly).
+The command mounts your local `dist/agave/<tag>/` into the container at `/out`, extracts the tarball
+to `/tmp/agave-test`, then runs `--version` to confirm the binaries start correctly.
+
 ```bash
-docker run --rm -v "$PWD/dist/agave/v3.0.0:/out" ubuntu:24.04 bash -lc '
+docker run --rm -v "$PWD/dist/agave/<agave_tag>:/out" ubuntu:24.04 bash -lc '
   apt-get update >/dev/null && apt-get install -y ca-certificates >/dev/null
   mkdir -p /tmp/agave-test
-  tar -xzf /out/agave-v3.0.0-linux-x86_64.tar.gz -C /tmp/agave-test
+  tar -xzf /out/agave-<agave_tag>-linux-x86_64.tar.gz -C /tmp/agave-test
   /tmp/agave-test/bin/solana --version
   /tmp/agave-test/bin/agave-validator --version
 '
 ```
 
-## Reproducibility check (current gap)
-Two rebuilds produce different hashes. To compare:
-```bash
-# Build twice and compare tarball hashes
-shasum -a 256 dist/agave/_repro/v3.0.0/run1/agave-v3.0.0-linux-x86_64.tar.gz \
-  dist/agave/_repro/v3.0.0/run2/agave-v3.0.0-linux-x86_64.tar.gz
+## Reproducibility check (advanced / optional)
+This is only for people who want to prove “same input → same output.”
+It compares two separate builds of the same tag. If you just want the binaries, you can skip this.
 
-# Compare per-file hashes
-diff -u dist/agave/_repro/v3.0.0/run1-files.sha256 \
-  dist/agave/_repro/v3.0.0/run2-files.sha256
+```bash
+# After doing two builds of the same tag, compare the tarball hashes
+shasum -a 256 dist/agave/_repro/<agave_tag>/run1/agave-<agave_tag>-linux-x86_64.tar.gz \
+  dist/agave/_repro/<agave_tag>/run2/agave-<agave_tag>-linux-x86_64.tar.gz
+
+# Compare per-file hashes (shows which files differ)
+diff -u dist/agave/_repro/<agave_tag>/run1-files.sha256 \
+  dist/agave/_repro/<agave_tag>/run2-files.sha256
 ```
 
 ## Automation (GitHub Actions)

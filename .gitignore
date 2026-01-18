@@ -1,5 +1,6 @@
 # Build outputs
-dist/
+dist/*
+!dist/.gitkeep
 build/
 out/
 tmp/
