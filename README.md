@@ -289,7 +289,7 @@ This project is designed for institutional validator operators with security req
 
 ## Contributing
 
-This is a portfolio project demonstrating DevOps/infrastructure skills. Not accepting external contributions, but feel free to fork for your own validator operations.
+Issues and feedback are welcome. Not currently accepting pull requests.
 
 ## Disclaimer
 
