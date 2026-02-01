@@ -40,7 +40,7 @@ This creates security, reliability, and auditability gaps in validator operation
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │ Upstream Repositories                                           │
-│ • anza-xyz/agave        • jito-foundation/jito-solana          │
+│ • anza-xyz/agave        • jito-foundation/jito-solana           │
 │ • firedancer-io/firedancer                                      │
 └────────────────────┬────────────────────────────────────────────┘
                      │
@@ -48,8 +48,8 @@ This creates security, reliability, and auditability gaps in validator operation
                      ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ GitHub Actions CI Workflows                                     │
-│ • agave-auto-build.yml          • agave-auto-build-testnet.yml │
-│ • jito-auto-build.yml           • jito-auto-build-testnet.yml  │
+│ • agave-auto-build.yml          • agave-auto-build-testnet.yml  │
+│ • jito-auto-build.yml           • jito-auto-build-testnet.yml   │
 │ • frankendancer-auto-build.yml  • frankendancer-auto-build-testnet.yml │
 └────────────────────┬────────────────────────────────────────────┘
                      │
@@ -57,14 +57,14 @@ This creates security, reliability, and auditability gaps in validator operation
                      ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ Docker Build Environment (Hermetic)                             │
-│ • Fixed base images  • Pinned toolchains  • Isolated deps      │
+│ • Fixed base images  • Pinned toolchains  • Isolated deps       │
 └────────────────────┬────────────────────────────────────────────┘
                      │
                      │ Compile from source
                      ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ Artifact Packaging                                              │
-│ • tar.gz archive     • SHA256SUMS      • Build metadata        │
+│ • tar.gz archive     • SHA256SUMS      • Build metadata         │
 └────────────────────┬────────────────────────────────────────────┘
                      │
                      │ Publish
