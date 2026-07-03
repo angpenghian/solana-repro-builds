@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     libclang-dev \
     cmake \
     make \
+    jq \
     protobuf-compiler \
     libprotobuf-dev \
     && rm -rf /var/lib/apt/lists/*
